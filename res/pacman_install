@@ -1,0 +1,47 @@
+# arg 1:  the new package version
+#pre_install() {
+#}
+
+# arg 1:  the new package version
+post_install() {
+	# do something here
+	cp /usr/share/rustdesk/files/rustdesk-lan.service /etc/systemd/system/rustdesk-lan.service
+	cp /usr/share/rustdesk/files/rustdesk-lan.desktop /usr/share/applications/
+	cp /usr/share/rustdesk/files/rustdesk-link.desktop /usr/share/applications/
+	systemctl daemon-reload
+	systemctl enable rustdesk-lan
+	systemctl start rustdesk-lan
+	update-desktop-database
+}
+
+# arg 1:  the new package version
+# arg 2:  the old package version
+pre_upgrade() {
+    systemctl stop rustdesk-lan || true
+}
+
+# arg 1:  the new package version
+# arg 2:  the old package version
+post_upgrade() {
+	cp /usr/share/rustdesk/files/rustdesk-lan.service /etc/systemd/system/rustdesk-lan.service
+	cp /usr/share/rustdesk/files/rustdesk-lan.desktop /usr/share/applications/
+	cp /usr/share/rustdesk/files/rustdesk-link.desktop /usr/share/applications/
+	systemctl daemon-reload
+	systemctl enable rustdesk-lan
+	systemctl start rustdesk-lan
+	update-desktop-database
+}
+
+# arg 1:  the old package version
+pre_remove() {
+	systemctl stop rustdesk-lan || true
+	systemctl disable rustdesk-lan || true
+	rm /etc/systemd/system/rustdesk-lan.service || true
+}
+
+# arg 1:  the old package version
+post_remove() {
+	rm /usr/share/applications/rustdesk-lan.desktop || true
+	rm /usr/share/applications/rustdesk-link.desktop || true
+	update-desktop-database
+}
