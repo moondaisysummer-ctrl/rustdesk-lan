@@ -4,6 +4,20 @@
 
 本项目与上游 RustDesk 的关系：仅在上游代码基础上做裁剪与优化，核心协议与架构保持不变。许可证与上游一致，沿用 [AGPL-3.0](LICENCE)。
 
+## 仓库与安装包下载
+
+| 站点 | 仓库地址 | 安装包下载（nightly 每日构建） |
+|---|---|---|
+| GitHub | https://github.com/moondaisysummer-ctrl/rustdesk-lan | https://github.com/moondaisysummer-ctrl/rustdesk-lan/releases/tag/nightly |
+| Gitee | https://gitee.com/moondaisy/rustdesk-lan | https://gitee.com/moondaisy/rustdesk-lan/releases/tag/nightly |
+
+提供以下安装包：
+
+- Windows x86_64：`exe` / `msi`
+- macOS aarch64（Apple Silicon，需 macOS 12.3+）：`dmg`（ad-hoc 签名未公证，首次打开方法见 Release 页说明）
+- Linux x86_64 / aarch64：`deb` / `rpm` / `AppImage` / `pkg.tar.zst`
+- Linux sciter 精简版：x86_64 / armv7 `deb`
+
 ## 相对上游的改动与优化
 
 ### 1. 仅限局域网直连
@@ -50,10 +64,8 @@
 
 ### 7. 命名与打包
 
-- 全部产物统一命名 `rustdesk-lan`，不带版本号
-- 提供两种交付形态：
-  - `rustdesk-lan.deb`（Debian 系安装包）
-  - `rustdesk-lan.AppImage`（通用免安装格式，x86_64）
+- 全部产物统一命名 `rustdesk-lan`（带版本与平台后缀，如 `rustdesk-lan-1.5.0-x86_64.deb`）
+- 覆盖 Windows / macOS / Linux 三平台，交付形态与下载地址见上文「仓库与安装包下载」
 
 ## 使用
 
