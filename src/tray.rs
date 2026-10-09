@@ -75,10 +75,11 @@ fn make_tray() -> hbb_common::ResultType<()> {
         None
     };
     let open_i = MenuItem::new(translate("Open".to_owned()), true, None);
+    let exit_i = MenuItem::new(translate("Quit".to_owned()), true, None);
     if let Some(quit_i) = &quit_i {
-        tray_menu.append_items(&[&open_i, quit_i]).ok();
+        tray_menu.append_items(&[&open_i, quit_i, &exit_i]).ok();
     } else {
-        tray_menu.append_items(&[&open_i]).ok();
+        tray_menu.append_items(&[&open_i, &exit_i]).ok();
     }
     let tooltip = |count: usize| {
         if count == 0 {
@@ -188,7 +189,15 @@ fn make_tray() -> hbb_common::ResultType<()> {
         }
 
         if let Ok(event) = menu_channel.try_recv() {
-            if let Some(quit_i) = &quit_i {
+            if event.id == exit_i.id() {
+                close_main_process();
+                // In the macOS service mode the tray lives in the `--server`
+                // process and should stay; only the standalone tray process
+                // quits itself.
+                if std::env::args().nth(1).as_deref() == Some("--tray") {
+                    *control_flow = ControlFlow::Exit;
+                }
+            } else if let Some(quit_i) = &quit_i {
                 if event.id == quit_i.id() {
                     /* failed in windows, seems no permission to check system process
                     if !crate::check_process("--server", false) {
@@ -295,6 +304,44 @@ async fn start_query_session_count(sender: std::sync::mpsc::Sender<Data>) {
             }
         }
         hbb_common::sleep(1.).await;
+    }
+}
+
+fn close_main_process() {
+    use hbb_common::sysinfo::System;
+    let mut sys = System::new();
+    sys.refresh_processes();
+    let mut path = std::env::current_exe().unwrap_or_default();
+    if let Ok(linked) = path.read_link() {
+        path = linked;
+    }
+    let path = path.to_string_lossy().to_lowercase();
+    let my_pid = std::process::id().to_string();
+    let my_uid = sys
+        .process((std::process::id() as usize).into())
+        .map(|x| x.user_id())
+        .unwrap_or_default();
+    for (_, p) in sys.processes().iter() {
+        let mut cur_path = p.exe().to_path_buf();
+        if let Ok(linked) = cur_path.read_link() {
+            cur_path = linked;
+        }
+        if cur_path.to_string_lossy().to_lowercase() != path {
+            continue;
+        }
+        if p.pid().to_string() == my_pid {
+            continue;
+        }
+        if p.user_id() != my_uid {
+            continue;
+        }
+        // main window process, same matching as `check_process("")`
+        let parg = if p.cmd().len() <= 1 { "" } else { &p.cmd()[1] };
+        if parg.starts_with("--") {
+            continue;
+        }
+        log::info!("Quit: close main window process, pid = {}", p.pid());
+        let _ = p.kill();
     }
 }
 
