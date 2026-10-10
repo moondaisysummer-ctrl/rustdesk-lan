@@ -45,6 +45,8 @@ class _ConnectionPageState extends State<ConnectionPage>
 
   final _localIp = ''.obs;
 
+  final _localPort = ''.obs;
+
   final RxBool _idInputFocused = false.obs;
   final FocusNode _idFocusNode = FocusNode();
   final TextEditingController _idEditingController = TextEditingController();
@@ -149,6 +151,9 @@ class _ConnectionPageState extends State<ConnectionPage>
     try {
       lanPasswordPlain.value =
           await bind.mainGetCommon(key: 'lan-password-plain');
+    } catch (_) {}
+    try {
+      _localPort.value = await bind.mainGetCommon(key: 'lan-port');
     } catch (_) {}
   }
 
@@ -524,6 +529,20 @@ class _ConnectionPageState extends State<ConnectionPage>
             ),
             SelectableText(
               _localIp.value.isEmpty ? '-' : _localIp.value,
+              style: const TextStyle(fontSize: 15, height: 1.4),
+            ).marginOnly(top: 2),
+            Text(
+              translate('Port'),
+              style: TextStyle(
+                  fontSize: 13,
+                  color: Theme.of(context)
+                      .textTheme
+                      .titleLarge
+                      ?.color
+                      ?.withOpacity(0.5)),
+            ).marginOnly(top: 14),
+            SelectableText(
+              _localPort.value.isEmpty ? '-' : _localPort.value,
               style: const TextStyle(fontSize: 15, height: 1.4),
             ).marginOnly(top: 2),
             Text(

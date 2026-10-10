@@ -42,7 +42,7 @@ pub async fn start_all() {
     let _ = handle.await;
 }
 
-fn get_direct_port() -> i32 {
+pub fn get_direct_port() -> i32 {
     let mut port = Config::get_option("direct-access-port")
         .parse::<i32>()
         .unwrap_or(0);

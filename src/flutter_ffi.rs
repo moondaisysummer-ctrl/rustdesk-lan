@@ -2510,6 +2510,8 @@ pub fn main_get_common(key: String) -> String {
         return ui_interface::is_local_permanent_password_set().to_string();
     } else if key == "lan-password-plain" {
         return ui_interface::get_lan_password_plain();
+    } else if key == "lan-port" {
+        return ui_interface::get_lan_port();
     } else {
         "".to_owned()
     }

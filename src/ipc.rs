@@ -932,6 +932,8 @@ async fn handle(data: Data, stream: &mut Connection) {
                     value = Some(Config::get_trusted_devices_json());
                 } else if name == "lan-password-plain" {
                     value = Some(Config::get_option("lan-password-plain"));
+                } else if name == "lan-port" {
+                    value = Some(crate::lan_server::get_direct_port().to_string());
                 } else {
                     value = None;
                 }
