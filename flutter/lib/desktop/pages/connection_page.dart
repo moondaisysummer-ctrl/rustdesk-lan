@@ -143,7 +143,8 @@ class _ConnectionPageState extends State<ConnectionPage>
     try {
       final interfaces = await NetworkInterface.list(
           type: InternetAddressType.IPv4, includeLoopback: false);
-      final ips = interfaces.map((e) => e.address).toList();
+      final ips =
+          interfaces.expand((e) => e.addresses.map((a) => a.address)).toList();
       if (ips.isNotEmpty) {
         _localIp.value = ips.join(', ');
       }
