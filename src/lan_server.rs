@@ -1,6 +1,6 @@
 use hbb_common::{
     allow_err,
-    config::{option2bool, Config, RENDEZVOUS_PORT},
+    config::{option2bool, Config},
     log, sleep, tokio,
 };
 
@@ -8,9 +8,10 @@ use base::config::keys::*;
 
 use crate::server::{check_zombie, new as new_server, ServerPtr};
 
-const DEFAULT_LAN_PASSWORD: &str = "12qwaszx";
+pub(crate) const DEFAULT_LAN_PASSWORD: &str = "12qwaszx";
+pub(crate) const DEFAULT_LAN_PORT: i32 = 31118;
 
-fn ensure_default_password() {
+pub(crate) fn ensure_default_password() {
     if Config::get_option("lan-password-plain").is_empty()
         && Config::set_permanent_password(DEFAULT_LAN_PASSWORD)
     {
@@ -55,7 +56,7 @@ pub fn get_direct_port() -> i32 {
         .parse::<i32>()
         .unwrap_or(0);
     if port <= 0 {
-        port = RENDEZVOUS_PORT + 2;
+        port = DEFAULT_LAN_PORT;
     }
     port
 }

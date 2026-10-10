@@ -534,9 +534,21 @@ pub fn get_lan_password_plain() -> String {
     #[cfg(any(target_os = "android", target_os = "ios"))]
     return Config::get_option("lan-password-plain");
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
-    match ipc::get_config("lan-password-plain") {
-        Ok(Some(v)) => v,
-        _ => "".to_owned(),
+    {
+        let v = match ipc::get_config("lan-password-plain") {
+            Ok(Some(v)) => v,
+            // No daemon (e.g. app not installed as a service): apply the
+            // defaults in this process so the UI still shows them.
+            _ => {
+                crate::lan_server::ensure_default_password();
+                Config::get_option("lan-password-plain")
+            }
+        };
+        if v.is_empty() {
+            crate::lan_server::DEFAULT_LAN_PASSWORD.to_owned()
+        } else {
+            v
+        }
     }
 }
 
@@ -545,8 +557,8 @@ pub fn get_lan_port() -> String {
     return String::new();
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     match ipc::get_config("lan-port") {
-        Ok(Some(v)) => v,
-        _ => "".to_owned(),
+        Ok(Some(v)) if !v.is_empty() => v,
+        _ => crate::lan_server::get_direct_port().to_string(),
     }
 }
 

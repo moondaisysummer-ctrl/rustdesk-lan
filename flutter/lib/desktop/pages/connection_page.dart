@@ -59,16 +59,6 @@ class _ConnectionPageState extends State<ConnectionPage>
     _allPeersLoader.init(setState);
     _idFocusNode.addListener(onFocusChanged);
     _loadLanInfo();
-    if (_idController.text.isEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        final lastRemoteId = await bind.mainGetLastRemoteId();
-        if (lastRemoteId != _idController.id) {
-          setState(() {
-            _idController.id = lastRemoteId;
-          });
-        }
-      });
-    }
     Get.put<TextEditingController>(_idEditingController);
     Get.put<IDTextEditingController>(_idController);
     windowManager.addListener(this);
