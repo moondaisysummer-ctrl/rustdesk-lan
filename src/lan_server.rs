@@ -21,6 +21,12 @@ fn ensure_default_password() {
     if Config::get_option("verification-method").is_empty() {
         Config::set_option("verification-method".to_string(), "use-permanent-password".to_string());
     }
+    if Config::get_option("approve-mode").is_empty() {
+        Config::set_option("approve-mode".to_string(), "password".to_string());
+    }
+    if Config::get_option("allow-hide-cm").is_empty() {
+        Config::set_option("allow-hide-cm".to_string(), "Y".to_string());
+    }
 }
 
 pub async fn start_all() {
