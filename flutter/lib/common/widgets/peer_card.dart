@@ -500,42 +500,6 @@ abstract class BasePeerCard extends StatelessWidget {
   }
 
   @protected
-  MenuEntryBase<String> _viewCameraAction(BuildContext context) {
-    return _connectCommonAction(
-      context,
-      translate('View camera'),
-      isViewCamera: true,
-    );
-  }
-
-  @protected
-  MenuEntryBase<String> _terminalAction(BuildContext context) {
-    return _connectCommonAction(
-      context,
-      '${translate('Terminal')} (beta)',
-      isTerminal: true,
-    );
-  }
-
-  @protected
-  MenuEntryBase<String> _terminalRunAsAdminAction(BuildContext context) {
-    return _connectCommonAction(
-      context,
-      '${translate('Terminal (Run as administrator)')} (beta)',
-      isTerminalRunAsAdmin: true,
-    );
-  }
-
-  @protected
-  MenuEntryBase<String> _tcpTunnelingAction(BuildContext context) {
-    return _connectCommonAction(
-      context,
-      translate('TCP tunneling'),
-      isTcpTunneling: true,
-    );
-  }
-
-  @protected
   MenuEntryBase<String> _rdpAction(BuildContext context, String id) {
     return MenuEntryButton<String>(
       childBuilder: (TextStyle? style) => Container(
@@ -632,32 +596,6 @@ abstract class BasePeerCard extends StatelessWidget {
       mainGetLocalBoolOptionSync(kOptionOpenNewConnInTabs)
           ? await _openInWindowsAction(id)
           : await _openInTabsAction(id);
-
-  @protected
-  Future<bool> _isForceAlwaysRelay(String id) async {
-    return option2bool(kOptionForceAlwaysRelay,
-        (await bind.mainGetPeerOption(id: id, key: kOptionForceAlwaysRelay)));
-  }
-
-  @protected
-  Future<MenuEntryBase<String>> _forceAlwaysRelayAction(String id) async {
-    return MenuEntrySwitch<String>(
-      switchType: SwitchType.scheckbox,
-      text: translate('Always connect via relay'),
-      getter: () async {
-        return await _isForceAlwaysRelay(id);
-      },
-      setter: (bool v) async {
-        await bind.mainSetPeerOption(
-            id: id,
-            key: kOptionForceAlwaysRelay,
-            value: bool2option(kOptionForceAlwaysRelay, v));
-        showToast(translate('Successful'));
-      },
-      padding: menuPadding,
-      dismissOnClicked: true,
-    );
-  }
 
   @protected
   MenuEntryBase<String> _renameAction(String id) {
@@ -839,23 +777,9 @@ class RecentPeerCard extends BasePeerCard {
     final List<MenuEntryBase<String>> menuItems = [
       _connectAction(context),
       _transferFileAction(context),
-      _viewCameraAction(context),
-      _terminalAction(context),
     ];
 
-    if (peer.platform == kPeerPlatformWindows) {
-      menuItems.add(_terminalRunAsAdminAction(context));
-    }
-
     final List favs = (await bind.mainGetFav()).toList();
-
-    if (isDesktop && peer.platform != kPeerPlatformAndroid) {
-      menuItems.add(_tcpTunnelingAction(context));
-    }
-    // menuItems.add(await _openNewConnInOptAction(peer.id));
-    if (!isWeb) {
-      menuItems.add(await _forceAlwaysRelayAction(peer.id));
-    }
     if (isWindows && peer.platform == kPeerPlatformWindows) {
       menuItems.add(_rdpAction(context, peer.id));
     }
@@ -900,21 +824,7 @@ class FavoritePeerCard extends BasePeerCard {
     final List<MenuEntryBase<String>> menuItems = [
       _connectAction(context),
       _transferFileAction(context),
-      _viewCameraAction(context),
-      _terminalAction(context),
     ];
-
-    if (peer.platform == kPeerPlatformWindows) {
-      menuItems.add(_terminalRunAsAdminAction(context));
-    }
-
-    if (isDesktop && peer.platform != kPeerPlatformAndroid) {
-      menuItems.add(_tcpTunnelingAction(context));
-    }
-    // menuItems.add(await _openNewConnInOptAction(peer.id));
-    if (!isWeb) {
-      menuItems.add(await _forceAlwaysRelayAction(peer.id));
-    }
     if (isWindows && peer.platform == kPeerPlatformWindows) {
       menuItems.add(_rdpAction(context, peer.id));
     }
@@ -956,23 +866,9 @@ class DiscoveredPeerCard extends BasePeerCard {
     final List<MenuEntryBase<String>> menuItems = [
       _connectAction(context),
       _transferFileAction(context),
-      _viewCameraAction(context),
-      _terminalAction(context),
     ];
 
-    if (peer.platform == kPeerPlatformWindows) {
-      menuItems.add(_terminalRunAsAdminAction(context));
-    }
-
     final List favs = (await bind.mainGetFav()).toList();
-
-    if (isDesktop && peer.platform != kPeerPlatformAndroid) {
-      menuItems.add(_tcpTunnelingAction(context));
-    }
-    // menuItems.add(await _openNewConnInOptAction(peer.id));
-    if (!isWeb) {
-      menuItems.add(await _forceAlwaysRelayAction(peer.id));
-    }
     if (isWindows && peer.platform == kPeerPlatformWindows) {
       menuItems.add(_rdpAction(context, peer.id));
     }
