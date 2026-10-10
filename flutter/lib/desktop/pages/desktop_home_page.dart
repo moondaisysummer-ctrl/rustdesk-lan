@@ -643,6 +643,7 @@ void setPasswordDialog({VoidCallback? notEmptyCallback}) async {
         });
         return;
       }
+      lanPasswordPlain.value = pass;
       if (pass.isNotEmpty) {
         notEmptyCallback?.call();
       }
@@ -774,6 +775,7 @@ void setPasswordDialog({VoidCallback? notEmptyCallback}) async {
               });
               return;
             }
+            lanPasswordPlain.value = '';
             close();
           },
           buttonStyle: ButtonStyle(

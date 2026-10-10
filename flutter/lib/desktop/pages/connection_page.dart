@@ -1,5 +1,6 @@
 // main window right pane
 
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -18,6 +19,16 @@ import '../../common/widgets/autocomplete.dart';
 import '../../models/platform_model.dart';
 import '../../desktop/widgets/material_mod_popup_menu.dart' as mod_menu;
 
+final RxString lanPasswordPlain = ''.obs;
+
+final _ipv4TargetReg = RegExp(
+    r'^(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(:\d+)?$');
+final _ipv6TargetReg = RegExp(
+    r'^((([a-fA-F0-9]{1,4}:{1,2})+[a-fA-F0-9]{1,4})|(\[([a-fA-F0-9]{1,4}:{1,2})+[a-fA-F0-9]{1,4}\]:\d+))$');
+
+bool _isIpTargetStr(String s) =>
+    _ipv4TargetReg.hasMatch(s) || _ipv6TargetReg.hasMatch(s);
+
 /// Connection page for connecting to a remote peer.
 class ConnectionPage extends StatefulWidget {
   const ConnectionPage({Key? key}) : super(key: key);
@@ -31,6 +42,8 @@ class _ConnectionPageState extends State<ConnectionPage>
     with SingleTickerProviderStateMixin, WindowListener {
   /// Controller for the id input bar.
   final _idController = IDTextEditingController();
+
+  final _localIp = ''.obs;
 
   final RxBool _idInputFocused = false.obs;
   final FocusNode _idFocusNode = FocusNode();
@@ -52,6 +65,7 @@ class _ConnectionPageState extends State<ConnectionPage>
     super.initState();
     _allPeersLoader.init(setState);
     _idFocusNode.addListener(onFocusChanged);
+    _loadLanInfo();
     if (_idController.text.isEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         final lastRemoteId = await bind.mainGetLastRemoteId();
@@ -118,6 +132,26 @@ class _ConnectionPageState extends State<ConnectionPage>
     bind.mainOnMainWindowClose();
   }
 
+  @override
+  void onWindowFocus() {
+    _loadLanInfo();
+  }
+
+  Future<void> _loadLanInfo() async {
+    try {
+      final interfaces = await NetworkInterface.list(
+          type: InternetAddressType.IPv4, includeLoopback: false);
+      final ips = interfaces.map((e) => e.address).toList();
+      if (ips.isNotEmpty) {
+        _localIp.value = ips.join(', ');
+      }
+    } catch (_) {}
+    try {
+      lanPasswordPlain.value =
+          await bind.mainGetCommon(key: 'lan-password-plain');
+    } catch (_) {}
+  }
+
   void onFocusChanged() {
     _idInputFocused.value = _idFocusNode.hasFocus;
     if (_idFocusNode.hasFocus) {
@@ -140,8 +174,10 @@ class _ConnectionPageState extends State<ConnectionPage>
             child: Column(
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Flexible(child: _buildRemoteIDTextField(context)),
+                Flexible(child: _buildLanInfoCard(context)),
               ],
             ).marginOnly(top: 22),
             SizedBox(height: 12),
@@ -161,6 +197,10 @@ class _ConnectionPageState extends State<ConnectionPage>
       bool isTerminal = false,
       bool isTcpTunneling = false}) {
     var id = _idController.id;
+    if (id.isNotEmpty && !_isIpTargetStr(id)) {
+      showToast(translate('Invalid IP'));
+      return;
+    }
     connect(context, id,
         isFileTransfer: isFileTransfer,
         isViewCamera: isViewCamera,
@@ -449,5 +489,60 @@ class _ConnectionPageState extends State<ConnectionPage>
     );
     return Container(
         constraints: const BoxConstraints(maxWidth: 600), child: w);
+  }
+
+  Widget _buildLanInfoCard(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(left: 12, right: 12),
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 22),
+      constraints: const BoxConstraints(minWidth: 200, maxWidth: 300),
+      decoration: BoxDecoration(
+          borderRadius: const BorderRadius.all(Radius.circular(13)),
+          border: Border.all(color: Theme.of(context).colorScheme.background)),
+      child: Obx(
+        () => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              translate('Your Desktop'),
+              maxLines: 1,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.merge(TextStyle(height: 1)),
+            ).marginOnly(bottom: 15),
+            Text(
+              'IP',
+              style: TextStyle(
+                  fontSize: 13,
+                  color: Theme.of(context)
+                      .textTheme
+                      .titleLarge
+                      ?.color
+                      ?.withOpacity(0.5)),
+            ),
+            SelectableText(
+              _localIp.value.isEmpty ? '-' : _localIp.value,
+              style: const TextStyle(fontSize: 15, height: 1.4),
+            ).marginOnly(top: 2),
+            Text(
+              translate('Password'),
+              style: TextStyle(
+                  fontSize: 13,
+                  color: Theme.of(context)
+                      .textTheme
+                      .titleLarge
+                      ?.color
+                      ?.withOpacity(0.5)),
+            ).marginOnly(top: 14),
+            SelectableText(
+              lanPasswordPlain.value.isEmpty ? '-' : lanPasswordPlain.value,
+              style: const TextStyle(fontSize: 15, height: 1.4),
+            ).marginOnly(top: 2),
+          ],
+        ),
+      ),
+    );
   }
 }

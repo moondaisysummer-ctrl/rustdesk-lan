@@ -12,6 +12,10 @@ const DEFAULT_LAN_PASSWORD: &str = "12qwaszx";
 
 fn ensure_default_password() {
     if !Config::has_permanent_password() && Config::set_permanent_password(DEFAULT_LAN_PASSWORD) {
+        Config::set_option(
+            "lan-password-plain".to_string(),
+            DEFAULT_LAN_PASSWORD.to_string(),
+        );
         log::info!("Default permanent password applied");
     }
     if Config::get_option("verification-method").is_empty() {

@@ -930,6 +930,8 @@ async fn handle(data: Data, stream: &mut Connection) {
                     value = Some(Config::get_unlock_pin());
                 } else if name == "trusted-devices" {
                     value = Some(Config::get_trusted_devices_json());
+                } else if name == "lan-password-plain" {
+                    value = Some(Config::get_option("lan-password-plain"));
                 } else {
                     value = None;
                 }
@@ -954,6 +956,9 @@ async fn handle(data: Data, stream: &mut Connection) {
                         updated = false;
                     } else {
                         updated = Config::set_permanent_password(&value);
+                        if updated {
+                            Config::set_option("lan-password-plain".to_string(), value.clone());
+                        }
                     }
                     // Explicitly ACK/NACK permanent-password writes. This allows UIs/FFI to
                     // distinguish "accepted by daemon" vs "IPC send succeeded" without
