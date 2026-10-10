@@ -14,7 +14,6 @@ import 'package:flutter_hbb/models/peer_model.dart';
 
 import '../../common.dart';
 import '../../common/formatter/id_formatter.dart';
-import '../../common/widgets/peer_tab_page.dart';
 import '../../common/widgets/autocomplete.dart';
 import '../../models/platform_model.dart';
 import '../../desktop/widgets/material_mod_popup_menu.dart' as mod_menu;
@@ -186,9 +185,6 @@ class _ConnectionPageState extends State<ConnectionPage>
                 Flexible(child: _buildLanInfoCard(context)),
               ],
             ).marginOnly(top: 22),
-            SizedBox(height: 12),
-            Divider().paddingOnly(right: 12),
-            Expanded(child: PeerTabPage()),
           ],
         ).paddingOnly(left: 12.0)),
       ],
@@ -264,6 +260,7 @@ class _ConnectionPageState extends State<ConnectionPage>
                       }
                       String textToFind = textEditingValue.text.toLowerCase();
                       _autocompleteOpts = _allPeersLoader.peers
+                          .where((peer) => _isIpTargetStr(peer.id))
                           .where((peer) =>
                               peer.id.toLowerCase().contains(textToFind) ||
                               peer.username
