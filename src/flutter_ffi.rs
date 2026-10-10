@@ -2512,6 +2512,8 @@ pub fn main_get_common(key: String) -> String {
         return ui_interface::get_lan_password_plain();
     } else if key == "lan-port" {
         return ui_interface::get_lan_port();
+    } else if key == "lan-ip" {
+        return ui_interface::get_lan_ip();
     } else {
         "".to_owned()
     }

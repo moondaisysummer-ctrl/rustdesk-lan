@@ -11,7 +11,9 @@ use crate::server::{check_zombie, new as new_server, ServerPtr};
 const DEFAULT_LAN_PASSWORD: &str = "12qwaszx";
 
 fn ensure_default_password() {
-    if !Config::has_permanent_password() && Config::set_permanent_password(DEFAULT_LAN_PASSWORD) {
+    if Config::get_option("lan-password-plain").is_empty()
+        && Config::set_permanent_password(DEFAULT_LAN_PASSWORD)
+    {
         Config::set_option(
             "lan-password-plain".to_string(),
             DEFAULT_LAN_PASSWORD.to_string(),

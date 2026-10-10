@@ -1,6 +1,5 @@
 // main window right pane
 
-import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -20,14 +19,6 @@ import '../../models/platform_model.dart';
 import '../../desktop/widgets/material_mod_popup_menu.dart' as mod_menu;
 
 final RxString lanPasswordPlain = ''.obs;
-
-final _ipv4TargetReg = RegExp(
-    r'^(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(:\d+)?$');
-final _ipv6TargetReg = RegExp(
-    r'^((([a-fA-F0-9]{1,4}:{1,2})+[a-fA-F0-9]{1,4})|(\[([a-fA-F0-9]{1,4}:{1,2})+[a-fA-F0-9]{1,4}\]:\d+))$');
-
-bool _isIpTargetStr(String s) =>
-    _ipv4TargetReg.hasMatch(s) || _ipv6TargetReg.hasMatch(s);
 
 /// Connection page for connecting to a remote peer.
 class ConnectionPage extends StatefulWidget {
@@ -141,13 +132,7 @@ class _ConnectionPageState extends State<ConnectionPage>
 
   Future<void> _loadLanInfo() async {
     try {
-      final interfaces = await NetworkInterface.list(
-          type: InternetAddressType.IPv4, includeLoopback: false);
-      final ips =
-          interfaces.expand((e) => e.addresses.map((a) => a.address)).toList();
-      if (ips.isNotEmpty) {
-        _localIp.value = ips.join(', ');
-      }
+      _localIp.value = await bind.mainGetCommon(key: 'lan-ip');
     } catch (_) {}
     try {
       lanPasswordPlain.value =
@@ -197,21 +182,13 @@ class _ConnectionPageState extends State<ConnectionPage>
 
   /// Callback for the connect button.
   /// Connects to the selected peer.
-  void onConnect(
-      {bool isFileTransfer = false,
-      bool isViewCamera = false,
-      bool isTerminal = false,
-      bool isTcpTunneling = false}) {
+  void onConnect({bool isFileTransfer = false}) {
     var id = _idController.id;
-    if (id.isNotEmpty && !_isIpTargetStr(id)) {
+    if (id.isNotEmpty && !isIpTargetStr(id)) {
       showToast(translate('Invalid IP'));
       return;
     }
-    connect(context, id,
-        isFileTransfer: isFileTransfer,
-        isViewCamera: isViewCamera,
-        isTerminal: isTerminal,
-        isTcpTunneling: isTcpTunneling);
+    connect(context, id, isFileTransfer: isFileTransfer);
   }
 
   /// UI for the remote ID TextField.
@@ -264,7 +241,7 @@ class _ConnectionPageState extends State<ConnectionPage>
                       }
                       String textToFind = textEditingValue.text.toLowerCase();
                       _autocompleteOpts = _allPeersLoader.peers
-                          .where((peer) => _isIpTargetStr(peer.id))
+                          .where((peer) => isIpTargetStr(peer.id))
                           .where((peer) =>
                               peer.id.toLowerCase().contains(textToFind) ||
                               peer.username

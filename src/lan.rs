@@ -350,3 +350,63 @@ async fn handle_received_peers(mut rx: UnboundedReceiver<config::DiscoveryPeer>)
     crate::flutter_ffi::main_load_lan_peers();
     Ok(())
 }
+
+pub fn primary_lan_ipv4() -> String {
+    // `connect` only looks up the route table and sends no packet.
+    if let Some(IpAddr::V4(ip)) = get_ipaddr_by_peer(("8.8.8.8", 80)) {
+        return ip.to_string();
+    }
+    #[cfg(not(target_os = "ios"))]
+    {
+        // No default route: fall back to the first non-virtual interface,
+        // preferring the one with a gateway.
+        let mut with_gateway = None;
+        let mut without_gateway = None;
+        for interface in default_net::get_interfaces() {
+            if interface.ipv4.is_empty()
+                || [interface.name.as_str()]
+                    .into_iter()
+                    .chain(interface.friendly_name.iter().map(|s| s.as_str()))
+                    .chain(interface.description.iter().map(|s| s.as_str()))
+                    .any(is_virtual_interface_name)
+            {
+                continue;
+            }
+            let ip = interface.ipv4[0].addr;
+            if ip.is_loopback() || ip.is_link_local() {
+                continue;
+            }
+            let slot = if interface.gateway.is_some() {
+                &mut with_gateway
+            } else {
+                &mut without_gateway
+            };
+            if slot.is_none() {
+                *slot = Some(ip);
+            }
+        }
+        if let Some(ip) = with_gateway.or(without_gateway) {
+            return ip.to_string();
+        }
+    }
+    String::new()
+}
+
+#[cfg(not(target_os = "ios"))]
+fn is_virtual_interface_name(name: &str) -> bool {
+    const VIRTUAL_KEYWORDS: [&str; 11] = [
+        "vmnet",
+        "vmware",
+        "virtualbox",
+        "vbox",
+        "hyper-v",
+        "vethernet",
+        "wsl",
+        "docker",
+        "virbr",
+        "veth",
+        "virtual",
+    ];
+    let name = name.to_lowercase();
+    VIRTUAL_KEYWORDS.iter().any(|k| name.contains(k))
+}

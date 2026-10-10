@@ -113,6 +113,14 @@ bool isDoubleEqual(double a, double b) {
   return (a - b).abs() < _kPositionEpsilon;
 }
 
+final ipv4TargetReg = RegExp(
+    r'^(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(:\d+)?$');
+final ipv6TargetReg = RegExp(
+    r'^((([a-fA-F0-9]{1,4}:{1,2})+[a-fA-F0-9]{1,4})|(\[([a-fA-F0-9]{1,4}:{1,2})+[a-fA-F0-9]{1,4}\]:\d+))$');
+
+bool isIpTargetStr(String s) =>
+    ipv4TargetReg.hasMatch(s) || ipv6TargetReg.hasMatch(s);
+
 class IconFont {
   static const _family1 = 'Tabbar';
   static const _family2 = 'PeerSearchbar';

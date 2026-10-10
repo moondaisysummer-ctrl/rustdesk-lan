@@ -550,6 +550,10 @@ pub fn get_lan_port() -> String {
     }
 }
 
+pub fn get_lan_ip() -> String {
+    crate::lan::primary_lan_ipv4()
+}
+
 pub fn set_permanent_password_with_result(password: String) -> bool {
     if config::Config::is_disable_change_permanent_password() {
         return false;
