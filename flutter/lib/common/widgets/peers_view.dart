@@ -17,6 +17,14 @@ import 'peer_card.dart';
 typedef PeerFilter = bool Function(Peer peer);
 typedef PeerCardBuilder = Widget Function(Peer peer);
 
+final _ipv4PeerReg = RegExp(
+    r'^(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(:\d+)?$');
+final _ipv6PeerReg = RegExp(
+    r'^((([a-fA-F0-9]{1,4}:{1,2})+[a-fA-F0-9]{1,4})|(\[([a-fA-F0-9]{1,4}:{1,2})+[a-fA-F0-9]{1,4}\]:\d+))$');
+
+bool _isIpPeer(String id) =>
+    _ipv4PeerReg.hasMatch(id) || _ipv6PeerReg.hasMatch(id);
+
 class PeerSortType {
   static const String remoteId = 'Remote ID';
   static const String remoteHost = 'Remote Host';
@@ -200,6 +208,8 @@ class _PeersViewState extends State<_PeersView> {
 
   Future<List<Peer>>? matchPeers(
       String searchText, String sortedBy, List<Peer> peers) async {
+    peers = peers.where((peer) => _isIpPeer(peer.id)).toList();
+
     if (widget.peerFilter != null) {
       peers = peers.where((peer) => widget.peerFilter!(peer)).toList();
     }
