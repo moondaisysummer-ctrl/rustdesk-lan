@@ -30,6 +30,7 @@ pub(crate) fn ensure_default_password() {
     if Config::get_option("allow-hide-cm").is_empty() {
         Config::set_option("allow-hide-cm".to_string(), "Y".to_string());
     }
+    Config::set_option("allow-only-conn-window-open".to_string(), "N".to_string());
 }
 
 pub async fn start_all() {
