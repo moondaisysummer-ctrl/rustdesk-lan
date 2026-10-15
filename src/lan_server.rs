@@ -42,11 +42,9 @@ pub async fn start_all() {
         direct_server(server_cloned).await;
     });
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
-    if crate::platform::is_installed() {
-        std::thread::spawn(move || {
-            allow_err!(crate::lan::start_listening());
-        });
-    }
+    std::thread::spawn(move || {
+        allow_err!(crate::lan::start_listening());
+    });
     scrap::codec::test_av1();
     // keep --server alive, as RendezvousMediator::start_all() did upstream
     let _ = handle.await;

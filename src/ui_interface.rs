@@ -726,7 +726,14 @@ pub fn get_lan_peers() -> Vec<HashMap<&'static str, String>> {
         .iter()
         .map(|peer| {
             HashMap::<&str, String>::from_iter([
-                ("id", peer.id.clone()),
+                (
+                    "id",
+                    peer.ip_mac
+                        .keys()
+                        .min()
+                        .cloned()
+                        .unwrap_or_else(|| peer.id.clone()),
+                ),
                 ("username", peer.username.clone()),
                 ("hostname", peer.hostname.clone()),
                 ("platform", peer.platform.clone()),
