@@ -33,9 +33,17 @@ pub(crate) fn ensure_default_password() {
     Config::set_option("allow-only-conn-window-open".to_string(), "N".to_string());
 }
 
+// The service is kept on for the whole lifetime of the program: starting the
+// program turns direct access on again, even if a previous run left it off.
+fn ensure_service_on() {
+    Config::set_option(OPTION_DIRECT_SERVER.to_owned(), "Y".to_owned());
+    Config::set_option("stop-service".to_owned(), "".to_owned());
+}
+
 pub async fn start_all() {
     check_zombie();
     ensure_default_password();
+    ensure_service_on();
     let server = new_server();
     let server_cloned = server.clone();
     let handle = tokio::spawn(async move {
@@ -68,7 +76,14 @@ async fn direct_server(server: ServerPtr) {
             OPTION_DIRECT_SERVER,
             &Config::get_option(OPTION_DIRECT_SERVER),
         ) || option2bool("stop-service", &Config::get_option("stop-service"));
-        if !disabled && listener.is_none() {
+        // The service is the reason the program runs: once it is stopped, quit.
+        // `ensure_service_on()` forces it on at startup, so this only triggers
+        // when it is turned off afterwards.
+        if disabled {
+            log::info!("Service stopped, exit");
+            std::process::exit(0);
+        }
+        if listener.is_none() {
             port = get_direct_port();
             match hbb_common::tcp::listen_any(port as _).await {
                 Ok(l) => {
@@ -95,7 +110,7 @@ async fn direct_server(server: ServerPtr) {
             }
         }
         if let Some(l) = listener.as_mut() {
-            if disabled || port != get_direct_port() {
+            if port != get_direct_port() {
                 log::info!("Exit direct access listen");
                 listener = None;
                 server.write().unwrap().close_connections();
