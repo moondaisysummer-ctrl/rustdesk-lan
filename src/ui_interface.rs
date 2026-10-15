@@ -721,8 +721,9 @@ pub fn peer_exists(id: &str) -> bool {
 
 #[inline]
 pub fn get_lan_peers() -> Vec<HashMap<&'static str, String>> {
-    config::LanPeers::load()
-        .peers
+    let mut peers = config::LanPeers::load().peers;
+    crate::lan::dedup_peers(&mut peers);
+    peers
         .iter()
         .map(|peer| {
             HashMap::<&str, String>::from_iter([

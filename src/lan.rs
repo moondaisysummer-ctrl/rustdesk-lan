@@ -310,8 +310,41 @@ fn spawn_wait_responses(sockets: Vec<UdpSocket>) -> UnboundedReceiver<config::Di
     rx
 }
 
+fn has_common_ip(a: &config::DiscoveryPeer, b: &config::DiscoveryPeer) -> bool {
+    a.ip_mac.keys().any(|ip| b.ip_mac.contains_key(ip))
+}
+
+// A LAN IP is unique per host, so two entries that share an IP are the same host and
+// must collapse into one. `is_same_peer` misses this when the host's service and user
+// session answer with different usernames (one of them empty).
+pub(crate) fn dedup_peers(peers: &mut Vec<config::DiscoveryPeer>) {
+    let mut i = 0;
+    while i < peers.len() {
+        let mut j = i + 1;
+        while j < peers.len() {
+            if peers[i].is_same_peer(&peers[j]) || has_common_ip(&peers[i], &peers[j]) {
+                let other = peers.remove(j);
+                if peers[i].username.is_empty() {
+                    peers[i].username = other.username;
+                }
+                if peers[i].hostname.is_empty() {
+                    peers[i].hostname = other.hostname;
+                }
+                if peers[i].platform.is_empty() {
+                    peers[i].platform = other.platform;
+                }
+                peers[i].ip_mac.extend(other.ip_mac);
+            } else {
+                j += 1;
+            }
+        }
+        i += 1;
+    }
+}
+
 async fn handle_received_peers(mut rx: UnboundedReceiver<config::DiscoveryPeer>) -> ResultType<()> {
     let mut peers = config::LanPeers::load().peers;
+    dedup_peers(&mut peers);
     peers.iter_mut().for_each(|peer| {
         peer.online = false;
     });
@@ -328,6 +361,16 @@ async fn handle_received_peers(mut rx: UnboundedReceiver<config::DiscoveryPeer>)
                         if in_response_set {
                             peer.ip_mac.extend(peer1.ip_mac);
                             peer.online = true;
+                        }
+                    }
+                    // A LAN IP is unique per machine, so a response whose IP is already known
+                    // belongs to the same machine even when the username differs (`is_same_peer`
+                    // would then miss it). Merge into one entry instead of keeping a duplicate.
+                    if let Some(pos) = peers.iter().position(|x| has_common_ip(x, &peer)) {
+                        let peer1 = peers.remove(pos);
+                        peer.ip_mac.extend(peer1.ip_mac);
+                        if peer.username.is_empty() {
+                            peer.username = peer1.username;
                         }
                     }
                     peers.insert(0, peer);
@@ -409,4 +452,33 @@ fn is_virtual_interface_name(name: &str) -> bool {
     ];
     let name = name.to_lowercase();
     VIRTUAL_KEYWORDS.iter().any(|k| name.contains(k))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn peer(id: &str, ip: &str, username: &str) -> config::DiscoveryPeer {
+        config::DiscoveryPeer {
+            id: id.to_owned(),
+            username: username.to_owned(),
+            hostname: "host".to_owned(),
+            platform: "Linux".to_owned(),
+            online: true,
+            ip_mac: HashMap::from([(ip.to_owned(), "mac".to_owned())]),
+        }
+    }
+
+    // The same host answers from its service and user session with the same IP but
+    // different usernames; they must collapse into a single entry.
+    #[test]
+    fn dedup_merges_same_ip_with_different_username() {
+        let mut peers = vec![
+            peer("1", "172.18.23.28", "lizhuo"),
+            peer("1", "172.18.23.28", ""),
+        ];
+        dedup_peers(&mut peers);
+        assert_eq!(peers.len(), 1);
+        assert_eq!(peers[0].username, "lizhuo");
+    }
 }
