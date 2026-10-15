@@ -544,7 +544,26 @@ class _DesktopHomePageState extends State<DesktopHomePage>
         _updateWindowSize();
       });
     }
+    if (isMacOS) {
+      Future.delayed(const Duration(seconds: 3), _autoInstallDaemonOnFirstRun);
+    }
     WidgetsBinding.instance.addObserver(this);
+  }
+
+  Future<void> _autoInstallDaemonOnFirstRun() async {
+    if (!mounted) return;
+    if (bind.isOutgoingOnly() || svcStopped.value) return;
+    if (!bind.mainIsInstalled()) return;
+    if (bind.mainIsInstalledDaemon(prompt: false)) return;
+    const keyAutoInstallDaemonPrompted = "auto-install-daemon-prompted";
+    if (bind.mainGetLocalOption(key: keyAutoInstallDaemonPrompted) == 'Y') {
+      return;
+    }
+    await bind.mainSetLocalOption(
+        key: keyAutoInstallDaemonPrompted, value: 'Y');
+    if (!mounted) return;
+    bind.mainIsInstalledDaemon(prompt: true);
+    setState(() {});
   }
 
   _updateWindowSize() {
